@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Farmers{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 data-i18n="manage_farmers">Manage Farmers</h2>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning" data-i18n="pending_approvals">Pending Approvals</div>
+            <div class="card-body">
+                <div id="no-pending" class="text-muted text-center py-3 d-none">No pending approvals</div>
+                <div class="table-responsive">
+                    <table class="table table-sm" id="pending-table">
+                        <thead><tr><th data-i18n="name">Name</th><th data-i18n="email">Email</th><th data-i18n="phone">Phone</th><th data-i18n="action">Action</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white" data-i18n="approved_farmers">Approved Farmers</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="approved-table">
+                        <thead><tr><th data-i18n="name">Name</th><th data-i18n="email">Email</th><th data-i18n="location">Location</th><th data-i18n="status">Status</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href = '/login';
+
+async function loadFarmers() {
+    try {
+        const [pendingRes, allRes] = await Promise.all([
+            fetch('/api/admin/farmers/pending', { headers: {'Authorization': 'Bearer ' + token} }),
+            fetch('/api/admin/farmers', { headers: {'Authorization': 'Bearer ' + token} })
+        ]);
+        if (!pendingRes.ok || !allRes.ok) { window.location.href = '/'; return; }
+        const pending = await pendingRes.json();
+        const all = await allRes.json();
+        const approved = all.filter(f => f.is_active);
+
+        if (!pending.length) {
+            document.getElementById('no-pending').classList.remove('d-none');
+            document.getElementById('pending-table').classList.add('d-none');
+        } else {
+            document.getElementById('no-pending').classList.add('d-none');
+            document.getElementById('pending-table').classList.remove('d-none');
+            document.querySelector('#pending-table tbody').innerHTML = pending.map(f => `
+                <tr>
+                    <td>${f.full_name || f.username}</td>
+                    <td>${f.email || '-'}</td>
+                    <td>${f.phone || '-'}</td>
+                    <td><button class="btn btn-sm btn-success" onclick="approveFarmer('${f._id}')" data-i18n="approve">Approve</button></td>
+                </tr>
+            `).join('');
+        }
+
+        document.querySelector('#approved-table tbody').innerHTML = approved.length
+            ? approved.map(f => `
+                <tr>
+                    <td>${f.full_name || f.username}</td>
+                    <td>${f.email || '-'}</td>
+                    <td>${f.location || '-'}</td>
+                    <td><span class="badge bg-success" data-i18n="active">Active</span></td>
+                </tr>
+            `).join('')
+            : '<tr><td colspan="4" class="text-center text-muted">No approved farmers yet</td></tr>';
+    } catch (e) {
+        console.error('Load farmers error:', e);
+    }
+}
+
+async function approveFarmer(id) {
+    const res = await fetch('/api/admin/farmers/approve', {
+        method: 'POST',
+        headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+        body: JSON.stringify({farmer_id: id})
+    });
+    const data = await res.json();
+    alert(data.message);
+    if (res.ok) loadFarmers();
+}
+
+loadFarmers();
+</script>
+{% endblock %}

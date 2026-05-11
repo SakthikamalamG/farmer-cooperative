@@ -1,0 +1,74 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f4f6f9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+main { flex: 1; }
+
+.navbar-brand { font-weight: 700; letter-spacing: .3px; font-size: 1.15rem; }
+
+.card {
+    border-radius: 10px;
+    border: 1px solid #e9ecef;
+    transition: box-shadow .2s;
+}
+
+.card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08) !important; }
+
+.card-header {
+    background: #fff;
+    border-bottom: 1px solid #e9ecef;
+    font-size: .95rem;
+    padding: .65rem 1rem;
+}
+
+.btn { border-radius: 6px; font-weight: 500; }
+.btn-sm { font-size: .82rem; }
+
+.form-control, .form-select {
+    border-radius: 6px;
+    font-size: .9rem;
+}
+
+.table th {
+    font-weight: 600;
+    font-size: .82rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.table td { font-size: .88rem; vertical-align: middle; }
+
+.badge { font-weight: 500; font-size: .75rem; }
+
+.nav-tabs .nav-link {
+    color: #555;
+    font-size: .88rem;
+    font-weight: 500;
+    border-radius: 6px 6px 0 0;
+}
+
+.nav-tabs .nav-link.active {
+    color: #198754;
+    font-weight: 700;
+    border-bottom-color: #fff;
+}
+
+footer { margin-top: auto; }
+
+/* Stat cards */
+.card.bg-success, .card.bg-primary, .card.bg-warning,
+.card.bg-info, .card.bg-secondary, .card.bg-dark {
+    border: none;
+    border-radius: 10px;
+}
+
+/* Responsive */
+@media (max-width: 576px) {
+    .card-body { padding: .75rem; }
+    h4 { font-size: 1.1rem; }
+}

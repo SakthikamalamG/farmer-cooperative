@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+{% block title %}Farmer Dashboard{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0 fw-bold">Farmer Dashboard</h4>
+        <p class="text-muted mb-0 small">Welcome back! Manage your farm from here.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addCropModal"><i class="bi bi-plus-circle me-1"></i>Add Crop</button>
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addProductModal"><i class="bi bi-upload me-1"></i>Upload Product</button>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 bg-success text-white text-center p-3">
+            <div class="fs-2 fw-bold" id="stat-crops">0</div>
+            <div class="small">Total Crops</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 bg-primary text-white text-center p-3">
+            <div class="fs-2 fw-bold" id="stat-products">0</div>
+            <div class="small">Products Listed</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 bg-warning text-dark text-center p-3">
+            <div class="fs-2 fw-bold" id="stat-expenses">0</div>
+            <div class="small">Total Expenses (Rs.)</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 bg-info text-white text-center p-3">
+            <div class="fs-2 fw-bold" id="stat-profit">0</div>
+            <div class="small">Net Profit (Rs.)</div>
+        </div>
+    </div>
+</div>
+
+<!-- Crops Table -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold"><i class="bi bi-clipboard-data me-1 text-success"></i>My Crops</span>
+        <a href="/farmer/crops" class="btn btn-sm btn-outline-success">AI Tools</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0" id="crops-table">
+                <thead class="table-light"><tr><th>Crop</th><th>Variety</th><th>Area</th><th>Season</th><th>Status</th><th>Yield Est.</th><th>Actions</th></tr></thead>
+                <tbody><tr><td colspan="7" class="text-center text-muted py-3">No crops added yet</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Products Table -->
+<div class="card shadow-sm mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold"><i class="bi bi-shop me-1 text-primary"></i>My Products (Live in Marketplace)</span>
+        <a href="/marketplace" class="btn btn-sm btn-outline-primary" target="_blank">View in Marketplace</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0" id="products-table">
+                <thead class="table-light"><tr><th>Name</th><th>Category</th><th>Price</th><th>Qty</th><th>Unit</th><th>Location</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody><tr><td colspan="8" class="text-center text-muted py-3">No products listed yet</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Links -->
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header fw-semibold">Quick Actions</div>
+            <div class="card-body d-flex flex-wrap gap-2">
+                <a href="/farmer/expenses" class="btn btn-outline-warning btn-sm"><i class="bi bi-wallet2 me-1"></i>Track Expenses</a>
+                <a href="/chat" class="btn btn-outline-success btn-sm"><i class="bi bi-chat-dots me-1"></i>Messages</a>
+                <a href="/marketplace" class="btn btn-outline-primary btn-sm"><i class="bi bi-shop me-1"></i>Marketplace</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header fw-semibold">AI Tools</div>
+            <div class="card-body d-flex flex-wrap gap-2">
+                <a href="/farmer/crops#recommend" class="btn btn-outline-info btn-sm"><i class="bi bi-lightbulb me-1"></i>Crop Recommendation</a>
+                <a href="/farmer/crops#predict" class="btn btn-outline-info btn-sm"><i class="bi bi-graph-up me-1"></i>Price Prediction</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Crop Modal -->
+<div class="modal fade" id="addCropModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="cropModalTitle">Add New Crop</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-crop-id">
+                <div class="row g-2">
+                    <div class="col-6"><label class="form-label">Crop Name *</label><input type="text" class="form-control" id="crop-name" required></div>
+                    <div class="col-6"><label class="form-label">Variety</label><input type="text" class="form-control" id="crop-variety"></div>
+                    <div class="col-6"><label class="form-label">Area (acres)</label><input type="number" class="form-control" id="crop-area" step="0.1"></div>
+                    <div class="col-6"><label class="form-label">Soil Type</label>
+                        <select class="form-select" id="crop-soil">
+                            <option>Loamy</option><option>Clay</option><option>Sandy</option><option>Red</option><option>Black</option>
+                        </select>
+                    </div>
+                    <div class="col-6"><label class="form-label">Season</label>
+                        <select class="form-select" id="crop-season">
+                            <option>Kharif</option><option>Rabi</option><option>Zaid</option>
+                        </select>
+                    </div>
+                    <div class="col-6"><label class="form-label">Yield Estimate (kg)</label><input type="number" class="form-control" id="crop-yield" step="0.1"></div>
+                    <div class="col-6"><label class="form-label">Planting Date</label><input type="date" class="form-control" id="crop-planting"></div>
+                    <div class="col-6"><label class="form-label">Expected Harvest</label><input type="date" class="form-control" id="crop-harvest"></div>
+                    <div class="col-12" id="crop-status-row" style="display:none">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" id="crop-status">
+                            <option value="growing">Growing</option><option value="harvested">Harvested</option><option value="failed">Failed</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="saveCrop()">Save Crop</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="productModalTitle">Upload Product to Marketplace</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-product-id">
+                <div class="row g-2">
+                    <div class="col-12">
+                        <label class="form-label">Product Name *</label>
+                        <input type="text" class="form-control" id="prod-name" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Category</label>
+                        <select class="form-select" id="prod-category">
+                            <option value="vegetables">&#x1F966; Vegetables</option>
+                            <option value="fruits">&#x1F34E; Fruits</option>
+                            <option value="grains">&#x1F33E; Grains</option>
+                            <option value="pulses">&#x1FAD8; Pulses</option>
+                            <option value="spices">&#x1F336; Spices</option>
+                            <option value="other">&#x1F4E6; Other</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Unit</label>
+                        <select class="form-select" id="prod-unit">
+                            <option value="kg">kg</option>
+                            <option value="quintal">quintal</option>
+                            <option value="ton">ton</option>
+                            <option value="piece">piece</option>
+                            <option value="dozen">dozen</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Price per Unit (Rs.) *</label>
+                        <input type="number" class="form-control" id="prod-price" step="0.01" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">Quantity Available *</label>
+                        <input type="number" class="form-control" id="prod-qty" step="0.1" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Location / Village</label>
+                        <input type="text" class="form-control" id="prod-location" placeholder="e.g. Coimbatore, Tamil Nadu">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="prod-desc" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="alert alert-warning mt-3 mb-0 small">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Product will be <strong>hidden</strong> by default. Go to your products table and click <strong>Enable</strong> to make it visible in the marketplace.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveProduct()">Upload to Marketplace</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href = '/login';
+
+async function loadDashboard() {
+    try {
+        const res = await fetch('/api/farmer/dashboard', { headers: {'Authorization': 'Bearer ' + token} });
+        if (res.status === 401 || res.status === 403) { window.location.href = '/login'; return; }
+        const data = await res.json();
+        document.getElementById('stat-crops').textContent    = data.total_crops || 0;
+        document.getElementById('stat-products').textContent = data.total_products || 0;
+        document.getElementById('stat-expenses').textContent = (data.total_expenses || 0).toFixed(0);
+        document.getElementById('stat-profit').textContent   = (data.net_profit || 0).toFixed(0);
+    } catch(e) { console.error(e); }
+}
+
+async function loadCrops() {
+    const res = await fetch('/api/farmer/crops', { headers: {'Authorization': 'Bearer ' + token} });
+    const crops = await res.json();
+    const tbody = document.querySelector('#crops-table tbody');
+    if (!crops.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">No crops added yet</td></tr>'; return; }
+    tbody.innerHTML = crops.map(c => `
+        <tr>
+            <td class="fw-semibold">${c.crop_name}</td>
+            <td>${c.variety || '-'}</td>
+            <td>${c.area || '-'} acres</td>
+            <td>${c.season || '-'}</td>
+            <td><span class="badge bg-${c.status === 'harvested' ? 'success' : c.status === 'failed' ? 'danger' : 'warning'}">${c.status}</span></td>
+            <td>${c.yield_estimate || '-'} kg</td>
+            <td>
+                <button class="btn btn-outline-primary btn-sm py-0 px-2 me-1" onclick='editCrop(${JSON.stringify(c)})'><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="deleteCrop('${c._id}')"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>`).join('');
+}
+
+async function loadProducts() {
+    const res = await fetch('/api/farmer/products', { headers: {'Authorization': 'Bearer ' + token} });
+    const products = await res.json();
+    const tbody = document.querySelector('#products-table tbody');
+    if (!products.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-3">No products listed yet</td></tr>'; return; }
+    tbody.innerHTML = products.map(p => `
+        <tr>
+            <td class="fw-semibold">${p.name}</td>
+            <td>${p.category || '-'}</td>
+            <td>Rs. ${p.price}</td>
+            <td>${p.quantity}</td>
+            <td>${p.unit}</td>
+            <td class="small text-muted">${p.location || '-'}</td>
+            <td>
+                ${p.is_available
+                    ? '<span class="badge bg-success">&#x1F7E2; Live in Market</span>'
+                    : '<span class="badge bg-secondary">&#x26AA; Hidden</span>'}
+            </td>
+            <td>
+                <button class="btn btn-sm py-0 px-2 me-1 ${p.is_available ? 'btn-warning' : 'btn-success'}" onclick="toggleProduct('${p._id}')">
+                    ${p.is_available ? '&#x1F6AB; Disable' : '&#x2705; Enable'}
+                </button>
+                <button class="btn btn-outline-primary btn-sm py-0 px-2 me-1" onclick='editProduct(${JSON.stringify(p)})'><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-outline-danger btn-sm py-0 px-2" onclick="deleteProduct('${p._id}')"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>`).join('');
+}
+
+function editCrop(c) {
+    document.getElementById('cropModalTitle').textContent   = 'Edit Crop';
+    document.getElementById('edit-crop-id').value          = c._id;
+    document.getElementById('crop-name').value             = c.crop_name || '';
+    document.getElementById('crop-variety').value          = c.variety || '';
+    document.getElementById('crop-area').value             = c.area || '';
+    document.getElementById('crop-soil').value             = c.soil_type || 'Loamy';
+    document.getElementById('crop-season').value           = c.season || 'Kharif';
+    document.getElementById('crop-yield').value            = c.yield_estimate || '';
+    document.getElementById('crop-planting').value         = c.planting_date || '';
+    document.getElementById('crop-harvest').value          = c.expected_harvest || '';
+    document.getElementById('crop-status-row').style.display = '';
+    document.getElementById('crop-status').value           = c.status || 'growing';
+    new bootstrap.Modal(document.getElementById('addCropModal')).show();
+}
+
+function editProduct(p) {
+    document.getElementById('productModalTitle').textContent = 'Edit Product';
+    document.getElementById('edit-product-id').value = p._id;
+    document.getElementById('prod-name').value        = p.name || '';
+    document.getElementById('prod-category').value    = p.category || 'vegetables';
+    document.getElementById('prod-unit').value        = p.unit || 'kg';
+    document.getElementById('prod-price').value       = p.price || '';
+    document.getElementById('prod-qty').value         = p.quantity || '';
+    document.getElementById('prod-location').value    = p.location || '';
+    document.getElementById('prod-desc').value        = p.description || '';
+    new bootstrap.Modal(document.getElementById('addProductModal')).show();
+}
+
+async function saveCrop() {
+    const name = document.getElementById('crop-name').value.trim();
+    if (!name) { alert('Crop name is required'); return; }
+    const id = document.getElementById('edit-crop-id').value;
+    const payload = {
+        crop_name: name,
+        variety: document.getElementById('crop-variety').value,
+        area: document.getElementById('crop-area').value,
+        soil_type: document.getElementById('crop-soil').value,
+        season: document.getElementById('crop-season').value,
+        yield_estimate: document.getElementById('crop-yield').value,
+        planting_date: document.getElementById('crop-planting').value,
+        expected_harvest: document.getElementById('crop-harvest').value,
+        status: document.getElementById('crop-status').value || 'growing'
+    };
+    const url    = id ? '/api/farmer/crops/' + id : '/api/farmer/crops';
+    const method = id ? 'PUT' : 'POST';
+    const res  = await fetch(url, { method, headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (res.ok) {
+        bootstrap.Modal.getInstance(document.getElementById('addCropModal')).hide();
+        document.getElementById('edit-crop-id').value = '';
+        document.getElementById('cropModalTitle').textContent = 'Add New Crop';
+        document.getElementById('crop-status-row').style.display = 'none';
+        loadCrops(); loadDashboard();
+    } else alert(data.message || 'Failed to save crop');
+}
+
+async function deleteCrop(id) {
+    if (!confirm('Delete this crop?')) return;
+    const res = await fetch('/api/farmer/crops/' + id, { method: 'DELETE', headers: {'Authorization': 'Bearer ' + token} });
+    if (res.ok) { loadCrops(); loadDashboard(); }
+}
+
+async function saveProduct() {
+    const name  = document.getElementById('prod-name').value.trim();
+    const price = document.getElementById('prod-price').value;
+    const qty   = document.getElementById('prod-qty').value;
+    if (!name || !price || !qty) { alert('Name, price and quantity are required'); return; }
+    const id = document.getElementById('edit-product-id').value;
+    const payload = {
+        name,
+        category:    document.getElementById('prod-category').value,
+        unit:        document.getElementById('prod-unit').value,
+        price:       parseFloat(price),
+        quantity:    parseFloat(qty),
+        location:    document.getElementById('prod-location').value,
+        description: document.getElementById('prod-desc').value
+    };
+    const url    = id ? '/api/farmer/products/' + id : '/api/farmer/products';
+    const method = id ? 'PUT' : 'POST';
+    const res  = await fetch(url, { method, headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+    const data = await res.json();
+    if (res.ok) {
+        bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+        document.getElementById('edit-product-id').value = '';
+        document.getElementById('productModalTitle').textContent = 'Upload Product to Marketplace';
+        loadProducts(); loadDashboard();
+    } else alert(data.message || 'Failed to save product');
+}
+
+async function toggleProduct(id) {
+    const res = await fetch('/api/farmer/products/' + id + '/toggle', {
+        method: 'POST', headers: {'Authorization': 'Bearer ' + token}
+    });
+    const data = await res.json();
+    if (res.ok) loadProducts();
+    else alert(data.message || 'Failed to toggle');
+}
+
+async function deleteProduct(id) {
+    if (!confirm('Remove this product from marketplace?')) return;
+    const res = await fetch('/api/farmer/products/' + id, { method: 'DELETE', headers: {'Authorization': 'Bearer ' + token} });
+    if (res.ok) { loadProducts(); loadDashboard(); }
+}
+
+loadDashboard();
+loadCrops();
+loadProducts();
+</script>
+{% endblock %}

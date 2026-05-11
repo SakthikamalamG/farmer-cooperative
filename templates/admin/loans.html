@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Loans{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8"><h2 data-i18n="manage_loans">Manage Loans & Schemes</h2></div>
+    <div class="col-md-4 text-end">
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#schemeModal" data-i18n="add_scheme">Add Scheme</button>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header" data-i18n="loan_applications">Loan Applications</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="loans-table">
+                        <thead><tr><th data-i18n="farmer">Farmer ID</th><th data-i18n="scheme">Scheme</th><th data-i18n="amount">Amount</th><th data-i18n="interest">Interest</th><th data-i18n="status">Status</th><th data-i18n="action">Action</th></tr></thead>
+                        <tbody><tr><td colspan="6" class="text-center text-muted">No applications yet</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header" data-i18n="government_schemes">Government Schemes</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="schemes-table">
+                        <thead><tr><th data-i18n="name">Name</th><th data-i18n="description">Description</th><th data-i18n="eligibility">Eligibility</th></tr></thead>
+                        <tbody><tr><td colspan="3" class="text-center text-muted">No schemes yet</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="schemeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Scheme</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="scheme-form">
+                    <div class="mb-3"><label class="form-label" data-i18n="scheme_name">Scheme Name</label><input type="text" class="form-control" id="scheme-name" required></div>
+                    <div class="mb-3"><label class="form-label" data-i18n="description">Description</label><textarea class="form-control" id="scheme-desc" rows="3"></textarea></div>
+                    <div class="mb-3"><label class="form-label" data-i18n="eligibility">Eligibility</label><input type="text" class="form-control" id="scheme-eligibility"></div>
+                    <div class="mb-3"><label class="form-label" data-i18n="benefits">Benefits (comma separated)</label><input type="text" class="form-control" id="scheme-benefits"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="close">Close</button>
+                <button type="button" class="btn btn-success" onclick="submitScheme()" data-i18n="save">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href = '/login';
+
+async function loadLoans() {
+    try {
+        const res = await fetch('/api/admin/loans', { headers: {'Authorization': 'Bearer ' + token} });
+        if (!res.ok) return;
+        const loans = await res.json();
+        const tbody = document.querySelector('#loans-table tbody');
+        tbody.innerHTML = loans.length ? loans.map(l => `
+            <tr>
+                <td>${l.farmer_id || '-'}</td>
+                <td>${l.scheme_name || '-'}</td>
+                <td>Rs. ${l.loan_amount || 0}</td>
+                <td>${l.interest_rate || 0}%</td>
+                <td><span class="badge bg-${l.status==='approved'?'success':l.status==='rejected'?'danger':'warning'}">${l.status}</span></td>
+                <td>
+                    ${l.status==='pending' ? `
+                        <button class="btn btn-sm btn-success me-1" onclick="updateLoan('${l._id}','approve')" data-i18n="approve">Approve</button>
+                        <button class="btn btn-sm btn-danger" onclick="updateLoan('${l._id}','reject')" data-i18n="reject">Reject</button>
+                    ` : '-'}
+                </td>
+            </tr>
+        `).join('') : '<tr><td colspan="6" class="text-center text-muted">No applications yet</td></tr>';
+    } catch (e) { console.error(e); }
+}
+
+async function loadSchemes() {
+    try {
+        const res = await fetch('/api/admin/schemes', { headers: {'Authorization': 'Bearer ' + token} });
+        if (!res.ok) return;
+        const schemes = await res.json();
+        const tbody = document.querySelector('#schemes-table tbody');
+        tbody.innerHTML = schemes.length ? schemes.map(s => `
+            <tr><td>${s.name || '-'}</td><td>${s.description || '-'}</td><td>${s.eligibility || '-'}</td></tr>
+        `).join('') : '<tr><td colspan="3" class="text-center text-muted">No schemes yet</td></tr>';
+    } catch (e) { console.error(e); }
+}
+
+async function updateLoan(id, action) {
+    const url = action === 'approve' ? '/api/admin/loans/approve' : '/api/admin/loans/reject';
+    const res = await fetch(url, {
+        method: 'POST', headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+        body: JSON.stringify({loan_id: id})
+    });
+    const data = await res.json();
+    alert(data.message);
+    if (res.ok) loadLoans();
+}
+
+async function submitScheme() {
+    const name = document.getElementById('scheme-name').value.trim();
+    if (!name) { alert('Scheme name is required'); return; }
+    const payload = {
+        name,
+        description: document.getElementById('scheme-desc').value,
+        eligibility: document.getElementById('scheme-eligibility').value,
+        benefits: document.getElementById('scheme-benefits').value.split(',').map(s => s.trim()).filter(Boolean)
+    };
+    const res = await fetch('/api/admin/schemes', {
+        method: 'POST', headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    alert(data.message);
+    if (res.ok) { bootstrap.Modal.getInstance(document.getElementById('schemeModal')).hide(); loadSchemes(); }
+}
+
+loadLoans();
+loadSchemes();
+</script>
+{% endblock %}

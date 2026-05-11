@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% block title %}Messages{% endblock %}
+{% block extra_css %}
+<style>
+.chat-bubble { max-width: 75%; word-break: break-word; }
+.msg-time { font-size: .7rem; opacity: .65; }
+#chat-messages { height: 380px; overflow-y: auto; background: #f8f9fa; }
+.conv-item { cursor: pointer; border-left: 3px solid transparent; }
+.conv-item:hover, .conv-item.active { border-left-color: #198754; background: #f0faf4; }
+</style>
+{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0 fw-bold">Messages</h4>
+    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#newChatModal"><i class="bi bi-pencil-square me-1"></i>New Message</button>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header fw-semibold py-2">Conversations</div>
+            <div class="list-group list-group-flush" id="conversations-list" style="min-height:200px">
+                <div class="text-muted text-center p-4 small">No conversations yet</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center py-2">
+                <span class="fw-semibold" id="chat-title">Select a conversation</span>
+            </div>
+            <div class="card-body p-3" id="chat-messages">
+                <p class="text-muted text-center mt-5">Select a conversation or start a new one</p>
+            </div>
+            <div class="card-footer bg-white" id="chat-input-area" style="display:none">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="chat-message" placeholder="Type a message…">
+                    <button class="btn btn-success" onclick="sendMessage()"><i class="bi bi-send"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Chat Modal -->
+<div class="modal fade" id="newChatModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Start New Conversation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label">Select User</label>
+                <select class="form-select" id="new-chat-user">
+                    <option value="">-- Select a user --</option>
+                </select>
+                <div class="mt-3">
+                    <label class="form-label">Message</label>
+                    <textarea class="form-control" id="new-chat-msg" rows="3" placeholder="Type your message…"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="startNewChat()">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href = '/login';
+const me = JSON.parse(localStorage.getItem('user') || '{}');
+let currentUserId = null;
+let pollInterval = null;
+
+async function loadConversations() {
+    const res = await fetch('/api/chat/conversations', { headers: {'Authorization': 'Bearer ' + token} });
+    const convs = await res.json();
+    const list = document.getElementById('conversations-list');
+    if (!convs.length) { list.innerHTML = '<div class="text-muted text-center p-4 small">No conversations yet</div>'; return; }
+    list.innerHTML = convs.map(c => `
+        <div class="list-group-item conv-item p-2 ${currentUserId === c.user_id ? 'active' : ''}" onclick="openChat('${c.user_id}', '${c.user_name.replace(/'/g,"\\'")}')">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fw-semibold small">${c.user_name}</div>
+                    <div class="text-muted" style="font-size:.78rem;white-space:nowrap;overflow:hidden;max-width:160px;text-overflow:ellipsis">${c.last_message || ''}</div>
+                </div>
+                ${c.unread_count > 0 ? `<span class="badge bg-danger rounded-pill">${c.unread_count}</span>` : ''}
+            </div>
+        </div>`).join('');
+}
+
+async function openChat(userId, userName) {
+    currentUserId = userId;
+    document.getElementById('chat-title').textContent = userName;
+    document.getElementById('chat-input-area').style.display = '';
+    document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+    await fetchMessages();
+    loadConversations();
+    if (pollInterval) clearInterval(pollInterval);
+    pollInterval = setInterval(fetchMessages, 4000);
+}
+
+async function fetchMessages() {
+    if (!currentUserId) return;
+    const res = await fetch(`/api/chat/messages/${currentUserId}`, { headers: {'Authorization': 'Bearer ' + token} });
+    const msgs = await res.json();
+    const container = document.getElementById('chat-messages');
+    const myId = String(me.id || '');
+    container.innerHTML = msgs.length ? msgs.map(m => {
+        const isMine = String(m.sender_id) !== String(currentUserId);
+        return `<div class="d-flex mb-2 ${isMine ? 'justify-content-end' : 'justify-content-start'}">
+            <div class="chat-bubble px-3 py-2 rounded-3 ${isMine ? 'bg-success text-white' : 'bg-white border'}">
+                <div>${m.content}</div>
+                <div class="msg-time text-end">${new Date(m.created_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</div>
+            </div>
+        </div>`;
+    }).join('') : '<p class="text-muted text-center mt-4 small">No messages yet. Say hello!</p>';
+    container.scrollTop = container.scrollHeight;
+}
+
+async function sendMessage() {
+    const msg = document.getElementById('chat-message').value.trim();
+    if (!msg || !currentUserId) return;
+    document.getElementById('chat-message').value = '';
+    await fetch('/api/chat/send', {
+        method: 'POST',
+        headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+        body: JSON.stringify({ receiver_id: currentUserId, message: msg })
+    });
+    fetchMessages();
+    loadConversations();
+}
+
+document.getElementById('chat-message').addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
+
+async function loadUsers() {
+    const res = await fetch('/api/chat/users', { headers: {'Authorization': 'Bearer ' + token} });
+    const users = await res.json();
+    const sel = document.getElementById('new-chat-user');
+    sel.innerHTML = '<option value="">-- Select a user --</option>' + users.map(u => `<option value="${u._id}">${u.full_name} (${u.role})</option>`).join('');
+}
+
+async function startNewChat() {
+    const userId = document.getElementById('new-chat-user').value;
+    const msg    = document.getElementById('new-chat-msg').value.trim();
+    if (!userId || !msg) { alert('Please select a user and type a message'); return; }
+    await fetch('/api/chat/send', {
+        method: 'POST',
+        headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+        body: JSON.stringify({ receiver_id: userId, message: msg })
+    });
+    bootstrap.Modal.getInstance(document.getElementById('newChatModal')).hide();
+    document.getElementById('new-chat-msg').value = '';
+    loadConversations();
+    const userName = document.getElementById('new-chat-user').options[document.getElementById('new-chat-user').selectedIndex].text;
+    openChat(userId, userName);
+}
+
+document.getElementById('newChatModal').addEventListener('show.bs.modal', loadUsers);
+loadConversations();
+</script>
+{% endblock %}

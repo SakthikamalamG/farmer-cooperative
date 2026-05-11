@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12"><h2 data-i18n="analytics">Analytics</h2></div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header" data-i18n="production_by_crop">Production by Crop</div>
+            <div class="card-body"><canvas id="productionChart" height="250"></canvas></div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header" data-i18n="orders_overview">Orders Overview</div>
+            <div class="card-body"><canvas id="ordersChart" height="250"></canvas></div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header" data-i18n="system_summary">System Summary</div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3"><h4 id="sum-farmers">0</h4><p data-i18n="total_farmers">Farmers</p></div>
+                    <div class="col-md-3"><h4 id="sum-crops">0</h4><p data-i18n="total_crops">Crops</p></div>
+                    <div class="col-md-3"><h4 id="sum-orders">0</h4><p data-i18n="total_orders">Orders</p></div>
+                    <div class="col-md-3"><h4 id="sum-revenue">0</h4><p data-i18n="revenue">Revenue</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href = '/login';
+
+async function loadAnalytics() {
+    try {
+        const res = await fetch('/api/admin/analytics', { headers: {'Authorization': 'Bearer ' + token} });
+        if (!res.ok) { window.location.href = '/'; return; }
+        const data = await res.json();
+
+        document.getElementById('sum-farmers').textContent = data.total_farmers || 0;
+        document.getElementById('sum-crops').textContent = data.total_crops || 0;
+        document.getElementById('sum-orders').textContent = data.total_orders || 0;
+        document.getElementById('sum-revenue').textContent = 'Rs. ' + (data.order_revenue || 0).toFixed(0);
+
+        const cropLabels = Object.keys(data.crop_production || {});
+        if (cropLabels.length > 0) {
+            new Chart(document.getElementById('productionChart'), {
+                type: 'bar',
+                data: { labels: cropLabels, datasets: [{ label: 'Count', data: Object.values(data.crop_production), backgroundColor: '#198754' }] },
+                options: { responsive: true }
+            });
+        }
+
+        const statusLabels = Object.keys(data.orders_by_status || {});
+        if (statusLabels.length > 0) {
+            new Chart(document.getElementById('ordersChart'), {
+                type: 'doughnut',
+                data: { labels: statusLabels, datasets: [{ data: Object.values(data.orders_by_status), backgroundColor: ['#ffc107','#198754','#dc3545'] }] },
+                options: { responsive: true }
+            });
+        }
+    } catch (e) {
+        console.error('Analytics load error:', e);
+    }
+}
+loadAnalytics();
+</script>
+{% endblock %}

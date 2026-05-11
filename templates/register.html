@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-3">
+    <div class="col-md-6 col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white text-center py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-person-plus me-2"></i>Create Account</h5>
+            </div>
+            <div class="card-body p-4">
+                <div id="reg-alert" class="alert d-none"></div>
+                <form id="register-form">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Full Name *</label>
+                            <input type="text" class="form-control" id="full_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Username *</label>
+                            <input type="text" class="form-control" id="username" required>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Email *</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Password *</label>
+                            <input type="password" class="form-control" id="password" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Role *</label>
+                            <select class="form-select" id="role" required>
+                                <option value="farmer">Farmer</option>
+                                <option value="buyer">Buyer</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone</label>
+                            <input type="tel" class="form-control" id="phone">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Location</label>
+                            <input type="text" class="form-control" id="location" placeholder="City / Village">
+                        </div>
+                    </div>
+                    <div id="farmer-note" class="alert alert-info mt-3 mb-0 small d-none">
+                        <i class="bi bi-info-circle me-1"></i>Farmer accounts require admin approval before login.
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-success" id="reg-btn">Create Account</button>
+                    </div>
+                </form>
+                <hr class="my-3">
+                <div class="text-center small">
+                    Already have an account? <a href="/login" class="text-success fw-semibold">Login here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('role').addEventListener('change', function() {
+    document.getElementById('farmer-note').classList.toggle('d-none', this.value !== 'farmer');
+});
+
+document.getElementById('register-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn   = document.getElementById('reg-btn');
+    const alert = document.getElementById('reg-alert');
+    btn.disabled = true;
+    btn.textContent = 'Creating account…';
+    alert.className = 'alert d-none';
+    const payload = {
+        full_name: document.getElementById('full_name').value,
+        username:  document.getElementById('username').value,
+        email:     document.getElementById('email').value,
+        password:  document.getElementById('password').value,
+        role:      document.getElementById('role').value,
+        phone:     document.getElementById('phone').value,
+        location:  document.getElementById('location').value
+    };
+    try {
+        const res  = await fetch('/api/auth/register', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+        const data = await res.json();
+        if (res.ok) {
+            alert.className = 'alert alert-success';
+            alert.textContent = payload.role === 'farmer'
+                ? 'Registration successful! Your account is pending admin approval.'
+                : 'Registration successful! You can now login.';
+            setTimeout(() => window.location.href = '/login', 2000);
+        } else {
+            alert.className = 'alert alert-danger';
+            alert.textContent = data.message || 'Registration failed.';
+        }
+    } catch(err) {
+        alert.className = 'alert alert-danger';
+        alert.textContent = 'Connection error. Please try again.';
+    }
+    btn.disabled = false;
+    btn.textContent = 'Create Account';
+});
+</script>
+{% endblock %}

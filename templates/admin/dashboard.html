@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0 fw-bold">Admin Dashboard</h4>
+        <p class="text-muted mb-0 small">System overview and management</p>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-2">
+        <div class="card border-0 bg-primary text-white text-center p-3">
+            <div class="fs-3 fw-bold" id="stat-farmers">0</div><div class="small">Farmers</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card border-0 bg-info text-white text-center p-3">
+            <div class="fs-3 fw-bold" id="stat-buyers">0</div><div class="small">Buyers</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card border-0 bg-success text-white text-center p-3">
+            <div class="fs-3 fw-bold" id="stat-crops">0</div><div class="small">Crops</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card border-0 bg-warning text-dark text-center p-3">
+            <div class="fs-3 fw-bold" id="stat-products">0</div><div class="small">Products</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card border-0 bg-secondary text-white text-center p-3">
+            <div class="fs-3 fw-bold" id="stat-orders">0</div><div class="small">Orders</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card border-0 bg-dark text-white text-center p-3">
+            <div class="fs-3 fw-bold" id="stat-revenue">0</div><div class="small">Revenue (Rs.)</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-3" id="adminTabs">
+    <li class="nav-item"><a class="nav-link active" href="#" onclick="showTab('approvals', this)">Approvals <span class="badge bg-danger ms-1" id="pending-badge">0</span></a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('users', this)">All Users</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('crops', this)">Crops</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('products', this)">Products</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('loans', this)">Loans</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showTab('charts', this)">Analytics</a></li>
+</ul>
+
+<!-- Approvals Tab -->
+<div id="tab-approvals">
+    <div class="card shadow-sm">
+        <div class="card-header fw-semibold">Pending Farmer Approvals</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0" id="pending-table">
+                    <thead class="table-light"><tr><th>Name</th><th>Username</th><th>Email</th><th>Phone</th><th>Location</th><th>Action</th></tr></thead>
+                    <tbody><tr><td colspan="6" class="text-center text-muted py-3">No pending approvals</td></tr></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Users Tab -->
+<div id="tab-users" style="display:none">
+    <div class="card shadow-sm">
+        <div class="card-header fw-semibold">All Users</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0" id="users-table">
+                    <thead class="table-light"><tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th>Location</th><th>Status</th><th>Joined</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Crops Tab -->
+<div id="tab-crops" style="display:none">
+    <div class="card shadow-sm">
+        <div class="card-header fw-semibold">All Crops</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0" id="crops-table">
+                    <thead class="table-light"><tr><th>Crop</th><th>Variety</th><th>Farmer</th><th>Area</th><th>Season</th><th>Status</th><th>Yield Est.</th><th>Harvest</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Products Tab -->
+<div id="tab-products" style="display:none">
+    <div class="card shadow-sm">
+        <div class="card-header fw-semibold">All Products in Marketplace</div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0" id="products-table">
+                    <thead class="table-light"><tr><th>Product</th><th>Farmer</th><th>Category</th><th>Price</th><th>Qty</th><th>Unit</th><th>Status</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loans Tab -->
+<div id="tab-loans" style="display:none">
+    <div class="row g-3">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header fw-semibold">Loan Applications</div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0" id="loans-table">
+                            <thead class="table-light"><tr><th>Farmer ID</th><th>Scheme</th><th>Amount</th><th>Interest</th><th>Status</th><th>Action</th></tr></thead>
+                            <tbody><tr><td colspan="6" class="text-center text-muted py-3">No applications</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center fw-semibold">
+                    Schemes
+                    <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#schemeModal">+ Add</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm mb-0" id="schemes-table">
+                            <thead class="table-light"><tr><th>Name</th><th>Eligibility</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Tab -->
+<div id="tab-charts" style="display:none">
+    <div class="row g-3">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header fw-semibold">Crop Production</div>
+                <div class="card-body"><canvas id="productionChart" height="220"></canvas></div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header fw-semibold">Order Status</div>
+                <div class="card-body"><canvas id="orderStatusChart" height="220"></canvas></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Scheme Modal -->
+<div class="modal fade" id="schemeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Add Government Scheme</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label">Scheme Name *</label><input type="text" class="form-control" id="scheme-name" required></div>
+                <div class="mb-3"><label class="form-label">Description</label><textarea class="form-control" id="scheme-desc" rows="2"></textarea></div>
+                <div class="mb-3"><label class="form-label">Eligibility</label><input type="text" class="form-control" id="scheme-eligibility"></div>
+                <div class="mb-3"><label class="form-label">Benefits (comma separated)</label><input type="text" class="form-control" id="scheme-benefits"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="submitScheme()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href = '/login';
+
+let chartsDrawn = false;
+let analyticsData = {};
+
+function showTab(name, el) {
+    document.querySelectorAll('#adminTabs .nav-link').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+    ['approvals','users','crops','products','loans','charts'].forEach(t => {
+        document.getElementById('tab-' + t).style.display = t === name ? '' : 'none';
+    });
+    if (name === 'users') loadUsers();
+    if (name === 'crops') loadCrops();
+    if (name === 'products') loadProducts();
+    if (name === 'loans') { loadLoans(); loadSchemes(); }
+    if (name === 'charts' && !chartsDrawn) drawCharts();
+    return false;
+}
+
+async function loadAnalytics() {
+    try {
+        const res = await fetch('/api/admin/analytics', { headers: {'Authorization': 'Bearer ' + token} });
+        if (res.status === 403) { alert('Admin access only'); window.location.href = '/'; return; }
+        analyticsData = await res.json();
+        document.getElementById('stat-farmers').textContent  = analyticsData.total_farmers || 0;
+        document.getElementById('stat-buyers').textContent   = analyticsData.total_buyers || 0;
+        document.getElementById('stat-crops').textContent    = analyticsData.total_crops || 0;
+        document.getElementById('stat-products').textContent = analyticsData.total_products || 0;
+        document.getElementById('stat-orders').textContent   = analyticsData.total_orders || 0;
+        document.getElementById('stat-revenue').textContent  = (analyticsData.order_revenue || 0).toFixed(0);
+    } catch(e) { console.error(e); }
+}
+
+async function loadPending() {
+    const res = await fetch('/api/admin/farmers/pending', { headers: {'Authorization': 'Bearer ' + token} });
+    const pending = await res.json();
+    document.getElementById('pending-badge').textContent = pending.length || '';
+    const tbody = document.querySelector('#pending-table tbody');
+    if (!pending.length) { tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-3">No pending approvals</td></tr>'; return; }
+    tbody.innerHTML = pending.map(f => `
+        <tr>
+            <td class="fw-semibold">${f.full_name || '-'}</td>
+            <td>${f.username}</td>
+            <td>${f.email || '-'}</td>
+            <td>${f.phone || '-'}</td>
+            <td>${f.location || '-'}</td>
+            <td><button class="btn btn-sm btn-success py-0 px-2" onclick="approveFarmer('${f._id}')"><i class="bi bi-check-lg me-1"></i>Approve</button></td>
+        </tr>`).join('');
+}
+
+async function loadUsers() {
+    const res = await fetch('/api/admin/users', { headers: {'Authorization': 'Bearer ' + token} });
+    const users = await res.json();
+    const tbody = document.querySelector('#users-table tbody');
+    tbody.innerHTML = users.map(u => `
+        <tr>
+            <td class="fw-semibold">${u.full_name || '-'}</td>
+            <td>${u.username}</td>
+            <td>${u.email || '-'}</td>
+            <td><span class="badge bg-${u.role === 'admin' ? 'danger' : u.role === 'farmer' ? 'success' : 'primary'}">${u.role}</span></td>
+            <td>${u.location || '-'}</td>
+            <td><span class="badge bg-${u.is_active ? 'success' : 'warning'}">${u.is_active ? 'Active' : 'Pending'}</span></td>
+            <td class="small text-muted">${u.created_at ? new Date(u.created_at).toLocaleDateString() : '-'}</td>
+        </tr>`).join('');
+}
+
+async function loadCrops() {
+    const res = await fetch('/api/admin/crops', { headers: {'Authorization': 'Bearer ' + token} });
+    const crops = await res.json();
+    const tbody = document.querySelector('#crops-table tbody');
+    if (!crops.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-3">No crops found</td></tr>'; return; }
+    tbody.innerHTML = crops.map(c => `
+        <tr>
+            <td class="fw-semibold">${c.crop_name}</td>
+            <td>${c.variety || '-'}</td>
+            <td>${c.farmer_name}</td>
+            <td>${c.area || '-'} acres</td>
+            <td>${c.season || '-'}</td>
+            <td><span class="badge bg-${c.status === 'harvested' ? 'success' : c.status === 'failed' ? 'danger' : 'warning'}">${c.status}</span></td>
+            <td>${c.yield_estimate || '-'} kg</td>
+            <td class="small">${c.expected_harvest || '-'}</td>
+        </tr>`).join('');
+}
+
+async function loadProducts() {
+    const res = await fetch('/api/admin/products', { headers: {'Authorization': 'Bearer ' + token} });
+    const products = await res.json();
+    const tbody = document.querySelector('#products-table tbody');
+    if (!products.length) { tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-3">No products found</td></tr>'; return; }
+    tbody.innerHTML = products.map(p => `
+        <tr>
+            <td class="fw-semibold">${p.name}</td>
+            <td>${p.farmer_name || '-'}</td>
+            <td>${p.category || '-'}</td>
+            <td>Rs. ${p.price}</td>
+            <td>${p.quantity}</td>
+            <td>${p.unit}</td>
+            <td><span class="badge bg-${p.is_available ? 'success' : 'secondary'}">${p.is_available ? 'Live' : 'Unlisted'}</span></td>
+        </tr>`).join('');
+}
+
+async function loadLoans() {
+    const res = await fetch('/api/admin/loans', { headers: {'Authorization': 'Bearer ' + token} });
+    const loans = await res.json();
+    const tbody = document.querySelector('#loans-table tbody');
+    tbody.innerHTML = loans.length ? loans.map(l => `
+        <tr>
+            <td>${l.farmer_id || '-'}</td>
+            <td>${l.scheme_name || '-'}</td>
+            <td>Rs. ${l.loan_amount || 0}</td>
+            <td>${l.interest_rate || 0}%</td>
+            <td><span class="badge bg-${l.status === 'approved' ? 'success' : l.status === 'rejected' ? 'danger' : 'warning'}">${l.status}</span></td>
+            <td>${l.status === 'pending' ? `
+                <button class="btn btn-sm btn-success py-0 px-2 me-1" onclick="updateLoan('${l._id}','approve')">Approve</button>
+                <button class="btn btn-sm btn-danger py-0 px-2" onclick="updateLoan('${l._id}','reject')">Reject</button>` : '-'}
+            </td>
+        </tr>`).join('') : '<tr><td colspan="6" class="text-center text-muted py-3">No applications</td></tr>';
+}
+
+async function loadSchemes() {
+    const res = await fetch('/api/admin/schemes', { headers: {'Authorization': 'Bearer ' + token} });
+    const schemes = await res.json();
+    const tbody = document.querySelector('#schemes-table tbody');
+    tbody.innerHTML = schemes.length ? schemes.map(s => `<tr><td>${s.name}</td><td class="small text-muted">${s.eligibility || '-'}</td></tr>`).join('')
+        : '<tr><td colspan="2" class="text-center text-muted py-3">No schemes</td></tr>';
+}
+
+function drawCharts() {
+    chartsDrawn = true;
+    const cropLabels = Object.keys(analyticsData.crop_production || {});
+    if (cropLabels.length) {
+        new Chart(document.getElementById('productionChart'), {
+            type: 'bar',
+            data: { labels: cropLabels, datasets: [{ label: 'Count', data: Object.values(analyticsData.crop_production), backgroundColor: '#198754' }] },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+    }
+    const statusLabels = Object.keys(analyticsData.orders_by_status || {});
+    if (statusLabels.length) {
+        new Chart(document.getElementById('orderStatusChart'), {
+            type: 'doughnut',
+            data: { labels: statusLabels, datasets: [{ data: Object.values(analyticsData.orders_by_status), backgroundColor: ['#ffc107','#198754','#dc3545'] }] },
+            options: { responsive: true }
+        });
+    }
+}
+
+async function approveFarmer(id) {
+    const res = await fetch('/api/admin/farmers/approve', {
+        method: 'POST', headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+        body: JSON.stringify({farmer_id: id})
+    });
+    const data = await res.json();
+    if (res.ok) { loadPending(); loadAnalytics(); }
+    else alert(data.message);
+}
+
+async function updateLoan(id, action) {
+    const url = action === 'approve' ? '/api/admin/loans/approve' : '/api/admin/loans/reject';
+    const res = await fetch(url, { method: 'POST', headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'}, body: JSON.stringify({loan_id: id}) });
+    if (res.ok) loadLoans();
+}
+
+async function submitScheme() {
+    const name = document.getElementById('scheme-name').value.trim();
+    if (!name) { alert('Scheme name required'); return; }
+    const res = await fetch('/api/admin/schemes', {
+        method: 'POST', headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+        body: JSON.stringify({ name, description: document.getElementById('scheme-desc').value, eligibility: document.getElementById('scheme-eligibility').value, benefits: document.getElementById('scheme-benefits').value.split(',').map(s => s.trim()) })
+    });
+    if (res.ok) { bootstrap.Modal.getInstance(document.getElementById('schemeModal')).hide(); loadSchemes(); }
+}
+
+loadAnalytics();
+loadPending();
+</script>
+{% endblock %}

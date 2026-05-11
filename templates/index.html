@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Farmer Cooperative{% endblock %}
+
+{% block content %}
+<div class="row align-items-center py-5">
+    <div class="col-lg-6">
+        <h1 class="display-4 fw-bold text-success" data-i18n="hero_title">Empowering Farmers, Connecting Communities</h1>
+        <p class="lead mt-3" data-i18n="hero_subtitle">A complete cooperative management system for modern agriculture. Manage crops, access markets, get AI recommendations, and secure loans.</p>
+        <div class="mt-4">
+            <a href="/register" class="btn btn-success btn-lg me-2" data-i18n="get_started">Get Started</a>
+            <a href="/marketplace" class="btn btn-outline-success btn-lg" data-i18n="browse_market">Browse Marketplace</a>
+        </div>
+    </div>
+    <div class="col-lg-6 text-center">
+        <div class="bg-success bg-opacity-10 rounded-4 p-5">
+            <i class="bi bi-flower1 display-1 text-success"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 py-5">
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-clipboard-data display-4 text-success mb-3"></i>
+                <h5 class="card-title" data-i18n="feat_crop_mgmt">Crop Management</h5>
+                <p class="card-text text-muted" data-i18n="feat_crop_desc">Track crops, expenses, and income with detailed analytics.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-shop display-4 text-success mb-3"></i>
+                <h5 class="card-title" data-i18n="feat_market">Digital Marketplace</h5>
+                <p class="card-text text-muted" data-i18n="feat_market_desc">Sell products directly to buyers with transparent pricing.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-robot display-4 text-success mb-3"></i>
+                <h5 class="card-title" data-i18n="feat_ai">AI Recommendations</h5>
+                <p class="card-text text-muted" data-i18n="feat_ai_desc">Get crop and price predictions powered by machine learning.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 py-5">
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-cloud-sun display-4 text-success mb-3"></i>
+                <h5 class="card-title" data-i18n="feat_weather">Weather Updates</h5>
+                <p class="card-text text-muted" data-i18n="feat_weather_desc">Real-time weather data and alerts for your region.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-cash-stack display-4 text-success mb-3"></i>
+                <h5 class="card-title" data-i18n="feat_loans">Loans & Schemes</h5>
+                <p class="card-text text-muted" data-i18n="feat_loans_desc">Apply for agricultural loans and government schemes.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+            <div class="card-body text-center p-4">
+                <i class="bi bi-chat-dots display-4 text-success mb-3"></i>
+                <h5 class="card-title" data-i18n="feat_chat">Farmer-Buyer Chat</h5>
+                <p class="card-text text-muted" data-i18n="feat_chat_desc">Direct communication between farmers and buyers.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

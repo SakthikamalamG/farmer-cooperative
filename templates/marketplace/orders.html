@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}My Orders{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0 fw-bold"><i class="bi bi-bag me-2 text-success"></i>My Orders</h4>
+    <a href="/marketplace" class="btn btn-outline-success btn-sm"><i class="bi bi-shop me-1"></i>Back to Marketplace</a>
+</div>
+
+<!-- Tabs -->
+<ul class="nav nav-tabs mb-4" id="orderTabs">
+    <li class="nav-item"><a class="nav-link active" href="#" onclick="showOrders('all',this)">All Orders</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showOrders('buy',this)">Buy Orders</a></li>
+    <li class="nav-item"><a class="nav-link" href="#" onclick="showOrders('preorder',this)">Pre-Orders 🌱</a></li>
+</ul>
+
+<div id="orders-container" class="row g-3"></div>
+
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href = '/login';
+
+let allOrders = [];
+
+async function loadOrders() {
+    const res = await fetch('/api/marketplace/orders', { headers: {'Authorization': 'Bearer ' + token} });
+    if (!res.ok) { document.getElementById('orders-container').innerHTML = '<div class="col-12 text-center text-muted py-5">Failed to load orders.</div>'; return; }
+    allOrders = await res.json();
+    renderOrders(allOrders);
+}
+
+function showOrders(type, el) {
+    document.querySelectorAll('#orderTabs .nav-link').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+    if (type === 'all') renderOrders(allOrders);
+    else renderOrders(allOrders.filter(o => o.order_type === type));
+    return false;
+}
+
+function renderOrders(list) {
+    const container = document.getElementById('orders-container');
+    if (!list.length) {
+        container.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="bi bi-bag-x display-4 d-block mb-2"></i>No orders found.<br><a href="/marketplace" class="btn btn-success btn-sm mt-3">Browse Marketplace</a></div>';
+        return;
+    }
+    container.innerHTML = list.map(o => {
+        const isPreorder = o.order_type === 'preorder';
+        const statusColor = o.status === 'completed' ? 'success' : o.status === 'rejected' ? 'danger' : 'warning';
+        const date = o.created_at ? new Date(o.created_at).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : '-';
+        return `
+        <div class="col-md-6">
+            <div class="card shadow-sm h-100" style="border-top: 3px solid ${isPreorder ? '#ffc107' : '#198754'}">
+                <div class="card-header d-flex justify-content-between align-items-center py-2">
+                    <div>
+                        <span class="fw-semibold">Order #${String(o._id).slice(-6).toUpperCase()}</span>
+                        <span class="ms-2 badge ${isPreorder ? 'bg-warning text-dark' : 'bg-success'}">
+                            ${isPreorder ? '🌱 Pre-Order' : '🛒 Buy Order'}
+                        </span>
+                    </div>
+                    <span class="badge bg-${statusColor}">${o.status}</span>
+                </div>
+                <div class="card-body py-2">
+                    <div class="row g-1 mb-2">
+                        <div class="col-6 small text-muted"><i class="bi bi-calendar me-1"></i>${date}</div>
+                        <div class="col-6 small text-muted text-end">
+                            ${isPreorder ? '<span class="text-warning fw-semibold">Price TBD at harvest</span>' : '<span class="fw-bold text-success">Rs. ' + o.total_amount.toFixed(2) + '</span>'}
+                        </div>
+                    </div>
+                    ${o.shipping_address ? `<div class="small text-muted mb-2"><i class="bi bi-geo-alt me-1"></i>${o.shipping_address}</div>` : ''}
+                    <div class="list-group list-group-flush">
+                        ${(o.items || []).map(i => `
+                            <div class="list-group-item px-0 py-1 d-flex justify-content-between border-0 border-bottom small">
+                                <span>${i.product_name || i.name || '-'}</span>
+                                <span class="text-muted">${i.quantity} ${i.item_type === 'preorder' ? 'kg (pre-order)' : 'x Rs.' + i.unit_price}</span>
+                            </div>`).join('')}
+                    </div>
+                </div>
+                ${isPreorder ? `
+                <div class="card-footer bg-warning bg-opacity-10 py-2 small text-warning fw-semibold">
+                    <i class="bi bi-clock-history me-1"></i>Farmer will contact you after harvest
+                </div>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+loadOrders();
+</script>
+{% endblock %}

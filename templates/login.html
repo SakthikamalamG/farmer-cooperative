@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<div class="row justify-content-center mt-3">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white text-center py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-person-circle me-2"></i>Login to FarmCoop</h5>
+            </div>
+            <div class="card-body p-4">
+                <div id="login-alert" class="alert d-none"></div>
+                <form id="login-form">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Username</label>
+                        <input type="text" class="form-control" id="username" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Password</label>
+                        <input type="password" class="form-control" id="password" required>
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-success" id="login-btn">Login</button>
+                    </div>
+                </form>
+                <hr class="my-3">
+                <div class="text-center small">
+                    Don't have an account? <a href="/register" class="text-success fw-semibold">Register here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('login-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn   = document.getElementById('login-btn');
+    const alert = document.getElementById('login-alert');
+    btn.disabled = true;
+    btn.textContent = 'Logging in…';
+    alert.className = 'alert d-none';
+    try {
+        const res  = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ username: document.getElementById('username').value, password: document.getElementById('password').value })
+        });
+        const data = await res.json();
+        if (res.ok) {
+            localStorage.setItem('token', data.access_token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            if (data.user.role === 'admin')        window.location.href = '/admin/dashboard';
+            else if (data.user.role === 'farmer')  window.location.href = '/farmer/dashboard';
+            else                                   window.location.href = '/marketplace';
+        } else if (res.status === 403) {
+            alert.className = 'alert alert-warning';
+            alert.textContent = 'Your account is pending admin approval. Please wait.';
+        } else {
+            alert.className = 'alert alert-danger';
+            alert.textContent = data.message || 'Login failed. Check your credentials.';
+        }
+    } catch(err) {
+        document.getElementById('login-alert').className = 'alert alert-danger';
+        document.getElementById('login-alert').textContent = 'Connection error. Please try again.';
+    }
+    btn.disabled = false;
+    btn.textContent = 'Login';
+});
+</script>
+{% endblock %}

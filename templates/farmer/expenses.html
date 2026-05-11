@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Expenses & Income{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 data-i18n="expenses_income">Expenses & Income</h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <button class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#expenseModal" data-i18n="add_expense">Add Expense</button>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#incomeModal" data-i18n="add_income">Add Income</button>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark" data-i18n="expense_breakdown">Expense Breakdown</div>
+            <div class="card-body">
+                <canvas id="expenseChart" height="200"></canvas>
+                <p id="no-expense-chart" class="text-muted text-center d-none">No expense data</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white" data-i18n="income_breakdown">Income Breakdown</div>
+            <div class="card-body">
+                <canvas id="incomeChart" height="200"></canvas>
+                <p id="no-income-chart" class="text-muted text-center d-none">No income data</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header" data-i18n="all_expenses">All Expenses</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="expenses-table">
+                        <thead><tr><th data-i18n="date">Date</th><th data-i18n="category">Category</th><th data-i18n="amount">Amount</th></tr></thead>
+                        <tbody><tr><td colspan="3" class="text-center text-muted">No expenses yet</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header" data-i18n="all_income">All Income</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm" id="income-table">
+                        <thead><tr><th data-i18n="date">Date</th><th data-i18n="source">Source</th><th data-i18n="amount">Amount</th></tr></thead>
+                        <tbody><tr><td colspan="3" class="text-center text-muted">No income yet</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expense Modal -->
+<div class="modal fade" id="expenseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="add_expense">Add Expense</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label" data-i18n="category">Category</label><input type="text" class="form-control" id="exp-category" placeholder="seed/fertilizer/labor" required></div>
+                <div class="mb-3"><label class="form-label" data-i18n="amount">Amount (Rs.)</label><input type="number" class="form-control" id="exp-amount" step="0.01" required></div>
+                <div class="mb-3"><label class="form-label" data-i18n="date">Date</label><input type="date" class="form-control" id="exp-date"></div>
+                <div class="mb-3"><label class="form-label">Description</label><input type="text" class="form-control" id="exp-desc"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="close">Close</button>
+                <button type="button" class="btn btn-warning" onclick="submitExpense()" data-i18n="save">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Income Modal -->
+<div class="modal fade" id="incomeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="add_income">Add Income</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3"><label class="form-label" data-i18n="source">Source</label><input type="text" class="form-control" id="inc-source" placeholder="crop sale/subsidy" required></div>
+                <div class="mb-3"><label class="form-label" data-i18n="amount">Amount (Rs.)</label><input type="number" class="form-control" id="inc-amount" step="0.01" required></div>
+                <div class="mb-3"><label class="form-label" data-i18n="date">Date</label><input type="date" class="form-control" id="inc-date"></div>
+                <div class="mb-3"><label class="form-label">Description</label><input type="text" class="form-control" id="inc-desc"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-i18n="close">Close</button>
+                <button type="button" class="btn btn-success" onclick="submitIncome()" data-i18n="save">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href = '/login';
+
+let expenseChartInstance = null;
+let incomeChartInstance = null;
+
+async function loadData() {
+    try {
+        const [expRes, incRes] = await Promise.all([
+            fetch('/api/farmer/expenses', { headers: {'Authorization': 'Bearer ' + token} }),
+            fetch('/api/farmer/income', { headers: {'Authorization': 'Bearer ' + token} })
+        ]);
+        const expenses = await expRes.json();
+        const incomes = await incRes.json();
+
+        const expTbody = document.querySelector('#expenses-table tbody');
+        expTbody.innerHTML = expenses.length ? expenses.map(e =>
+            `<tr><td>${e.date||'-'}</td><td>${e.type||e.category||'-'}</td><td>Rs. ${e.amount}</td></tr>`
+        ).join('') : '<tr><td colspan="3" class="text-center text-muted">No expenses yet</td></tr>';
+
+        const incTbody = document.querySelector('#income-table tbody');
+        incTbody.innerHTML = incomes.length ? incomes.map(i =>
+            `<tr><td>${i.date||'-'}</td><td>${i.source||'-'}</td><td>Rs. ${i.amount}</td></tr>`
+        ).join('') : '<tr><td colspan="3" class="text-center text-muted">No income yet</td></tr>';
+
+        if (expenses.length) {
+            const expByCat = {};
+            expenses.forEach(e => { const k = e.type||e.category||'Other'; expByCat[k] = (expByCat[k]||0) + e.amount; });
+            if (expenseChartInstance) expenseChartInstance.destroy();
+            expenseChartInstance = new Chart(document.getElementById('expenseChart'), {
+                type: 'doughnut',
+                data: { labels: Object.keys(expByCat), datasets: [{ data: Object.values(expByCat), backgroundColor: ['#dc3545','#fd7e14','#ffc107','#20c997','#0dcaf0'] }] }
+            });
+        } else {
+            document.getElementById('no-expense-chart').classList.remove('d-none');
+        }
+
+        if (incomes.length) {
+            const incBySrc = {};
+            incomes.forEach(i => { const k = i.source||'Other'; incBySrc[k] = (incBySrc[k]||0) + i.amount; });
+            if (incomeChartInstance) incomeChartInstance.destroy();
+            incomeChartInstance = new Chart(document.getElementById('incomeChart'), {
+                type: 'doughnut',
+                data: { labels: Object.keys(incBySrc), datasets: [{ data: Object.values(incBySrc), backgroundColor: ['#198754','#0d6efd','#6610f2','#d63384','#adb5bd'] }] }
+            });
+        } else {
+            document.getElementById('no-income-chart').classList.remove('d-none');
+        }
+    } catch (e) {
+        console.error('Load data error:', e);
+    }
+}
+
+async function submitExpense() {
+    const amount = document.getElementById('exp-amount').value;
+    const type = document.getElementById('exp-category').value.trim();
+    if (!amount || !type) { alert('Category and amount are required'); return; }
+    const res = await fetch('/api/farmer/expenses', {
+        method: 'POST',
+        headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+        body: JSON.stringify({ type, amount: parseFloat(amount), description: document.getElementById('exp-desc').value, date: document.getElementById('exp-date').value })
+    });
+    const data = await res.json();
+    if (res.ok) { bootstrap.Modal.getInstance(document.getElementById('expenseModal')).hide(); loadData(); }
+    else alert(data.message || 'Failed to add expense');
+}
+
+async function submitIncome() {
+    const amount = document.getElementById('inc-amount').value;
+    const source = document.getElementById('inc-source').value.trim();
+    if (!amount || !source) { alert('Source and amount are required'); return; }
+    const res = await fetch('/api/farmer/income', {
+        method: 'POST',
+        headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+        body: JSON.stringify({ source, amount: parseFloat(amount), description: document.getElementById('inc-desc').value, date: document.getElementById('inc-date').value })
+    });
+    const data = await res.json();
+    if (res.ok) { bootstrap.Modal.getInstance(document.getElementById('incomeModal')).hide(); loadData(); }
+    else alert(data.message || 'Failed to add income');
+}
+
+loadData();
+</script>
+{% endblock %}
