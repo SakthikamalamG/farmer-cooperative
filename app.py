@@ -85,8 +85,6 @@ def chat_page():
     return render_template('chat.html')
 
 if __name__ == '__main__':
-    with app.app_context():
-        import models
-        db.create_all()
+  
 
     app.run()
