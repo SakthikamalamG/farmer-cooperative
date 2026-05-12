@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template
 from flask_cors import CORS
 from config import Config
@@ -6,11 +7,15 @@ from extensions import db, jwt
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# Initialize Extensions
 db.init_app(app)
 jwt.init_app(app)
 CORS(app)
 
-# Basic Routes
+# =========================
+# BASIC BLUEPRINT ROUTES
+# =========================
+
 from routes.auth import auth_bp
 from routes.farmer import farmer_bp
 from routes.admin import admin_bp
@@ -21,34 +26,57 @@ app.register_blueprint(farmer_bp, url_prefix='/api/farmer')
 app.register_blueprint(admin_bp, url_prefix='/api/admin')
 app.register_blueprint(marketplace_bp, url_prefix='/api/marketplace')
 
-# ML Route
+# =========================
+# ML ROUTE
+# =========================
+
 try:
     from routes.ml import ml_bp
     app.register_blueprint(ml_bp, url_prefix='/api/ml')
-except Exception as e:
-    print("ML Blueprint Error:", e)
 
-# Weather Route
+except Exception as e:
+    print("ML Blueprint Error:", str(e))
+    raise e
+
+# =========================
+# WEATHER ROUTE
+# =========================
+
 try:
     from routes.weather import weather_bp
     app.register_blueprint(weather_bp, url_prefix='/api/weather')
-except Exception as e:
-    print("Weather Blueprint Error:", e)
 
-# Chat Route
+except Exception as e:
+    print("Weather Blueprint Error:", str(e))
+    raise e
+
+# =========================
+# CHAT ROUTE
+# =========================
+
 try:
     from routes.chat import chat_bp
     app.register_blueprint(chat_bp, url_prefix='/api/chat')
-except Exception as e:
-    print("Chat Blueprint Error:", e)
 
-# Notifications Route
+except Exception as e:
+    print("Chat Blueprint Error:", str(e))
+    raise e
+
+# =========================
+# NOTIFICATIONS ROUTE
+# =========================
+
 try:
     from routes.notifications import notifications_bp
     app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
-except Exception as e:
-    print("Notifications Blueprint Error:", e)
 
+except Exception as e:
+    print("Notifications Blueprint Error:", str(e))
+    raise e
+
+# =========================
+# TEMPLATE ROUTES
+# =========================
 
 @app.route('/')
 def index():
@@ -118,7 +146,3 @@ def marketplace_orders():
 @app.route('/chat')
 def chat_page():
     return render_template('chat.html')
-
-
-if __name__ == '__main__':
-    app.run()

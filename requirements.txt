@@ -2,4 +2,6 @@ Flask
 flask-cors
 Flask-JWT-Extended
 Flask-SQLAlchemy
+python-dotenv
+requests
 gunicorn
